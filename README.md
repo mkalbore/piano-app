@@ -1,70 +1,118 @@
-# Getting Started with Create React App
+# Piano App Project
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
 
-## Available Scripts
+This project is a simple piano app built using React and Tailwind CSS. The app allows users to play piano keys and adjust the volume.
 
-In the project directory, you can run:
+## Files
 
-### `npm start`
+- [piano-app/src/Piano.js]This file contains the Piano component, which renders the piano keys and handles user input.
+- [piano-app/src/App.js]This file contains the App component, which renders the Piano component and handles app-wide state.
+- [piano-app/tailwind.config.js]This file contains the Tailwind CSS configuration for the project.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Screen Shot
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+![Screen Shot](./public/piano-app-ss.png "Piano App Screenshot")
 
-### `npm test`
+## Code Snippets
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Piano.js
 
-### `npm run build`
+```jsx
+import React, { useState, useEffect } from "react";
+import VolumeSlider from "./VolumeSlider";
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+const whiteKeys = [
+	// ...
+];
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+const blackKeys = [
+	// ...
+];
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+const Piano = () => {
+	const [activeKeys, setActiveKeys] = useState([]);
+	const [volume, setVolume] = useState(50);
 
-### `npm run eject`
+	const playSound = key => {
+		console.log(`Playing sound for key: ${key}`);
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+		if (key === activeKeys[activeKeys.length - 1]) {
+			console.log(`Key ${key} is already active.`);
+			return;
+		} else {
+			const audio = new Audio(`/sounds/${key}.mp3`);
+			audio.volume = volume / 100;
+			audio.play().catch(error => {
+				console.error(`Error playing sound for key ${key}:`, error);
+			});
+		}
+	};
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+	return (
+		<div>
+			<VolumeSlider volume={volume} setVolume={setVolume} />
+			{/* ... */}
+		</div>
+	);
+};
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+export default Piano;
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### App.js
 
-## Learn More
+```jsx
+import React from "react";
+import Piano from "./Piano";
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+const App = () => {
+	return (
+		<div>
+			<Piano />
+		</div>
+	);
+};
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+export default App;
+```
 
-### Code Splitting
+### Tailwind config
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```js
+module.exports = {
+	content: ["./src/**/*.{js,jsx,ts,tsx}"],
+	theme: {
+		extend: {},
+	},
+	plugins: [],
+};
+```
 
-### Analyzing the Bundle Size
+## Running the Code
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### To run the code, follow these steps:
 
-### Making a Progressive Web App
+1. Install dependencies: Run the following command in your terminal:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```bash
+npm install
+```
 
-### Advanced Configuration
+2. Start the development server: Run the following command in your terminal:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```bash
+npm run start
+```
 
-### Deployment
+3. Open the app in your browser: Open your web browser and navigate to http://localhost:3000.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Building the App
 
-### `npm run build` fails to minify
+To build the app for production, run the following command in your terminal:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```bash
+npm run build
+```
+
+This will create a production-ready build of the app in the build directory.

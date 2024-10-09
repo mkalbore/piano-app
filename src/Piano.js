@@ -96,7 +96,7 @@ const keyMap = {
 	"[": "A3",
 	"]": "Bb3",
 	// Octave 4 (C4 - B4)
-	Backslash: "C4",
+	"\\": "C4",
 	1: "Db4",
 	2: "D4",
 	3: "Eb4",
@@ -111,7 +111,7 @@ const keyMap = {
 
 	// Octave 5 (C5 - B5)
 	"=": "C5",
-	Backspace: "Db5",
+	"`": "Db5",
 	Tab: "D5",
 };
 
@@ -119,6 +119,10 @@ const Piano = () => {
 	const [activeKeys, setActiveKeys] = useState([]);
 	const [volume, setVolume] = useState(75); // Add a state for volume
 	const [keyTimeouts, setKeyTimeouts] = useState({}); // Add a state for key timeouts
+	const [enableMouseEvents, setEnableMouseEvents] = useState(false); // Add a state for enabling/disabling mouse events
+	const [screenSize, setScreenSize] = useState(window.innerWidth);
+	const [numWhiteKeys, setNumWhiteKeys] = useState(whiteKeys.length);
+	const [numBlackKeys, setNumBlackKeys] = useState(blackKeys.length);
 
 	// Function to play sound
 	const playSound = key => {
@@ -168,6 +172,26 @@ const Piano = () => {
 		}
 	};
 
+	useEffect(() => {
+		const handleResize = () => {
+			const newScreenSize = window.innerWidth;
+			setScreenSize(newScreenSize);
+			if (newScreenSize < 1024) {
+				setNumWhiteKeys(Math.ceil(whiteKeys.length / 2));
+				setNumBlackKeys(Math.ceil(blackKeys.length / 2));
+			} else {
+				setNumWhiteKeys(whiteKeys.length);
+				setNumBlackKeys(blackKeys.length);
+			}
+		};
+
+		handleResize(); // Call it once to set initial values
+		window.addEventListener("resize", handleResize);
+		return () => {
+			window.removeEventListener("resize", handleResize);
+		};
+	}, []);
+
 	// UseEffect to listen for key events
 	useEffect(() => {
 		console.log("Adding keydown and keyup event listeners");
@@ -188,7 +212,7 @@ const Piano = () => {
 
 	// Function to get black key offset
 	const getBlackKeyOffset = index => {
-		const offsets = [
+		const desktopOffsets = [
 			3.75, //
 			7.25, //
 			14.25, //
@@ -211,20 +235,64 @@ const Piano = () => {
 			94.5, // 3
 			98, // 6
 
-			// 16 Keys
-			// repeat for every octave
+			// 21 Keys
+			// repeat for every octave ??
 		];
-		return offsets[index % offsets.length]; // Repeat the pattern for additional octaves
+		const mobileOffsets = [
+			6.25, // x
+			13.25, // v
+			27, // m
+			34.25, // .
+			41, // d
+			55.25, // g // Eb2
+			62, // k // Gb2
+			76, // ; // Ab2
+			83.25, // e // Db3
+			90, // t // Eb3
+			91, // r // Gb3
+			92, // y // Ab3
+			93, // u // Db4
+			94, // i // Eb4
+			95, // o // Gb4
+			96, // p // Ab4
+			97, // a // Db5
+			98, // s // Eb5
+			99, // n // Gb5
+			99.25, // l // Ab5
+			99.5, // h // Db6
+			// 21 Keys
+			// 10 Keys
+		];
+
+		if (screenSize >= 1024) {
+			// Desktop screen size
+			console.log("Using desktop offsets"); // Debugging log
+			return desktopOffsets[index % desktopOffsets.length];
+		} else {
+			// Mobile screen size
+			console.log("Using mobile offsets"); // Debugging log
+			return mobileOffsets[index % mobileOffsets.length];
+		}
 	};
 
 	return (
-		<div className='relative flex flex-col justify-center items-center content-center w-full'>
+		<div className='fixed flex flex-col justify-center items-center content-center h-screen w-screen pb-2'>
+			<div className='flex flex-col items-center mt-4'>
+				<label className='inline-flex items-center'>
+					<input
+						type='checkbox'
+						checked={enableMouseEvents}
+						onChange={event => setEnableMouseEvents(event.target.checked)}
+					/>
+					<span className='ml-2'>Enable Mouse Hover Playing</span>
+				</label>
+			</div>
 			{/* Render the VolumeSlider component */}
 			<VolumeSlider volume={volume} setVolume={setVolume} />
-			<div className='relative flex justify-center items-center content-center w-full h-72 mt-5 px-8 '>
+			<div className='relative flex justify-center items-center content-center w-full h-72 mt-5 px-2 lg:px-8 '>
 				{/* White Keys */}
 				<div className='flex relative w-full h-full'>
-					{whiteKeys.map((key, index) => (
+					{whiteKeys.slice(0, numWhiteKeys).map((key, index) => (
 						<div
 							key={key}
 							className={`relative border border-black bg-gray-300 h-full flex flex-col items-center justify-end shadow-lg transition-all duration-75 ease-out select-none
@@ -235,17 +303,21 @@ const Piano = () => {
 							}
               flex-grow flex-shrink basis-[calc(100%/52)]`}
 							onMouseOver={() => {
-								setActiveKeys([...activeKeys, key]);
-								playSound(key);
+								if (enableMouseEvents) {
+									setActiveKeys([...activeKeys, key]);
+									playSound(key);
+								}
 							}}
 							onMouseOut={() => {
-								const timeoutId = setTimeout(() => {
-									setActiveKeys(activeKeys.filter(k => k !== key));
-								}, 200); // 200ms delay
-								setKeyTimeouts(prevTimeouts => ({
-									...prevTimeouts,
-									[key]: timeoutId,
-								}));
+								if (enableMouseEvents) {
+									const timeoutId = setTimeout(() => {
+										setActiveKeys(activeKeys.filter(k => k !== key));
+									}, 200); // 200ms delay
+									setKeyTimeouts(prevTimeouts => ({
+										...prevTimeouts,
+										[key]: timeoutId,
+									}));
+								}
 							}}
 							onMouseDown={() => {
 								setActiveKeys([...activeKeys, key]);
@@ -267,18 +339,19 @@ const Piano = () => {
 				</div>
 				{/* Black Keys */}
 				<div className='absolute top-0 flex w-full h-[60%] justify-center'>
-					{blackKeys.map((key, index) => {
+					{blackKeys.slice(0, numBlackKeys).map((key, index) => {
 						if (!key) return null; // Skip spaces where there's no black key
 
 						// Use the getBlackKeyOffset function to position black keys
 						const leftOffset = getBlackKeyOffset(index); // Get the specific offset for this key
+						// console.log(`Black key ${key} offset:`, leftOffset); // Debugging log
 						const blackKeyStyle = {
-							left: `calc(${leftOffset}%)`, // Use the offset for positioning
+							left: `${leftOffset}%`, // Use the offset for positioning
 						};
 						return (
 							<div
 								key={key}
-								className={`absolute border border-black bg-black w-[calc(100%/32*0.6)] h-full flex flex-col items-center justify-end shadow-lg transition-all duration-75 ease-out select-none
+								className={`absolute border border-black bg-black w-[calc(100%/28*1)] lg:w-[calc(100%/32*0.6)] h-full flex flex-col items-center justify-end shadow-lg transition-all duration-75 ease-out select-none
               ${
 								activeKeys.includes(key)
 									? "bg-gray-400 shadow-red-400/75 scale-[98%] -translate-y-[2px]"
@@ -287,17 +360,21 @@ const Piano = () => {
               z-10`}
 								style={blackKeyStyle}
 								onMouseOver={() => {
-									setActiveKeys([...activeKeys, key]);
-									playSound(key);
+									if (enableMouseEvents) {
+										setActiveKeys([...activeKeys, key]);
+										playSound(key);
+									}
 								}}
 								onMouseOut={() => {
-									const timeoutId = setTimeout(() => {
-										setActiveKeys(activeKeys.filter(k => k !== key));
-									}, 200); // 200ms delay
-									setKeyTimeouts(prevTimeouts => ({
-										...prevTimeouts,
-										[key]: timeoutId,
-									}));
+									if (enableMouseEvents) {
+										const timeoutId = setTimeout(() => {
+											setActiveKeys(activeKeys.filter(k => k !== key));
+										}, 200); // 200ms delay
+										setKeyTimeouts(prevTimeouts => ({
+											...prevTimeouts,
+											[key]: timeoutId,
+										}));
+									}
 								}}
 								onMouseDown={() => {
 									setActiveKeys([...activeKeys, key]);

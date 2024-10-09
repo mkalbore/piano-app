@@ -1,5 +1,4 @@
 import Piano from "./Piano";
-import VolumeSlider from "./VolumeSlider";
 
 function App() {
 	return (
